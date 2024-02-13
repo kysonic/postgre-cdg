@@ -1,19 +1,19 @@
-# ORDER **********
+# ORDER **************************************************************************************************************
 SELECT * FROM products ORDER BY price DESC;
 
 SELECT * FROM products ORDER BY price ASC, weight;
-# PAGING **********
+# PAGING **************************************************************************************************************
 SELECT * FROM products ORDER BY price OFFSET 5 LIMIT 5 ;
 SELECT name FROM phones ORDER BY price DESC OFFSET 1 LIMIT 2;
 
-# UNION **********
+# UNION **************************************************************************************************************
 
 (SELECT * FROM products ORDER BY price DESC LIMIT 4) UNION
 (SELECT price / weight as ration FROM products ORDER BY price / weight DESC LIMIT 4);
 
 # UNION, UNION ALL, INTERSECT, INTERSECT ALL, EXCEPT, EXCEPT ALL
 
-# SUBQUERY **********
+# SUBQUERY **************************************************************************************************************
 
 # List the name and price of all products that are more expensive than all products in the Toys department
 
@@ -57,4 +57,25 @@ SELECT name, department, price FROM products AS p1 WHERE price = (SELECT MAX(pri
 
 SELECT name, (SELECT COUNT(*) FROM orders AS o WHERE p.id = o.product_id) FROM products as p;
 
+# DISTINCT **************************************************************************************************************
+
+SELECT DISTINCT department, name FROM products;
+
+SELECT COUNT(DISTINCT department) FROM products;
+
+# UTILITY OPERATORS **************************************************************************************************************
+
+SELECT GREATEST (20, 10, 30); # 30
+# Cost to ship 
+SELECT name, weight, GREATEST(weight * 2, 30) as cost_to_ship FROM products;
+
+SELECT LEAST (20, 10, 30); # 10
+
+SELECT name, price, 
+CASE 
+  WHEN price > 600 THEN 'high'
+  WHEN price > 300 THEN 'medium'
+  ELSE 'cheap'
+END
+FROM products;
 

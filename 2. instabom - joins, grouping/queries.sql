@@ -1,11 +1,11 @@
-# BASICS **********
+# BASICS **************************************************************************************************************
 SELECT * FROM users;
 
 SELECT username FROM users WHERE id > 5;
 
 SELECT LOWER(contents) FROM comments;
 
-# JOINS **********
+# JOINS **************************************************************************************************************
 # For each comment show the contents of the comment and the username of the user who wrote the comment
 
 SELECT contents, username FROM comments JOIN users ON users.id = comments.user_id;
@@ -26,7 +26,7 @@ SELECT url, contents FROM comments as c LEFT JOIN photos as p ON c.photo_id = p.
 
 SELECT url, contents, username FROM comments as c JOIN photos as p ON c.photo_id = p.id JOIN users as u ON u.id = c.user_id AND u.id = p.user_id;
 
-# AGGREGATION AND GROUPING **********
+# AGGREGATION AND GROUPING **************************************************************************************************************
 
 SELECT user_id FROM comments GROUP BY user_id;
 # Select maximum comment with largest id 
