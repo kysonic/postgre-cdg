@@ -1,5 +1,4 @@
 # Show username and how many likes they have
-
 SELECT username, COUNT(*) FROM likes JOIN users ON users.id = likes.user_id GROUP BY username ORDER BY COUNT(*) DESC;
 
 
@@ -28,7 +27,7 @@ WITH tags AS (
 )
 SELECT username FROM users JOIN tags ON users.id = tags.user_id;
 
-# Recursive CTE
+# Recursive CTE *****************************************************************
 
 WITH RECURSIVE countdown(val) AS (
   SELECT 3 AS val
@@ -46,3 +45,21 @@ WITH RECURSIVE suggestions(leader_id, follower_id, depth) AS (
 	FROM followers JOIN suggestions ON suggestions.leader_id = followers.follower_id WHERE depth < 3
 )
 SELECT DISTINCT users.id, users.username, depth FROM suggestions JOIN users ON users.id = suggestions.leader_id WHERE depth > 1 LIMIT 30;
+
+# VIEWS *****************************************************************
+
+# Most popular users
+
+SELECT username, COUNT(*) FROM users JOIN 
+(
+	SELECT user_id FROM photo_tags
+	UNION ALL
+	SELECT user_id FROM caption_tags 
+) as tags ON tags.user_id = users.id GROUP BY username 
+ORDER BY COUNT(*) DESC;
+
+# Using views 
+SELECT username, COUNT(*) FROM users JOIN 
+tags ON tags.user_id = users.id GROUP BY username 
+ORDER BY COUNT(*) DESC;
+

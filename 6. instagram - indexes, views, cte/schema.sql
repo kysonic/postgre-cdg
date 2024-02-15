@@ -101,6 +101,70 @@ CREATE TABLE followers (
 CREATE INDEX users_username_idx ON users (username);
 DROP INDEX users_username_idx;
 
--- Benchmarking --
+-- We realized that photo_tags and caption_tags should be combined, so how we always use UNION to work with them, possible solutions ADD
 
-EXPLAIN ANALYZE SELECT * FROM users WHERE username = 'Emil30';
+-- 1. Create new table and migrate data 
+
+CREATE TABLE tags (
+	id SERIAL PRIMARY KEY,
+	created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+	x REAL,
+	y REAL,
+
+	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+);
+
+INSERT INTO tags (created_at, updated_at, x, y, user_id, post_id)
+SELECT id, created_at, updated_at, x, y, user_id, post_id FROM photo_tags;
+
+INSERT INTO tags (created_at, user_id, post_id)
+SELECT id, created_at, user_id, post_id FROM caption_tags;
+
+DROP TABLE photo_tags;
+DROP TABLE caption_tags;
+
+-- Downside 1: we can break FOREIGN KEYs
+-- Downside 2: code could reference old tables 
+
+-- 2. VIEW (Fake table that aggregate other tables)
+
+CREATE VIEW tags AS (
+	SELECT id, created_at, user_id, post_id, 'photo_tag' AS type FROM photo_tags
+	UNION ALL
+	SELECT id, created_At, user_id, post_id, 'caption_tag' AS type FROM caption_tags
+);
+
+
+-- Common Views for performance sake (recent_post, most viewed posts, etc) -- 
+
+CREATE VIEW recent_posts AS (
+	SELECT * FROM posts ORDER BY created_at DESC LIMIT 10
+);
+
+-- Update view -- 
+
+CREATE OR REPLACE VIEW recent_posts AS (
+		SELECT * FROM posts ORDER BY created_at DESC LIMIT 15
+);
+-- DELETE --
+DROP VIEW recent_posts;
+
+-- Materialized VIEWS - executes not every time but save it (cached) -- 
+
+-- Super slow query must be cached --
+
+CREATE MATERIALIZED VIEW weekly_likes AS (
+	SELECT 
+	DATE_TRUNC('week', COALESCE(posts.created_at, comments.created_at)) AS week,
+	COUNT(posts.id) AS num_posts,
+	COUNT(comments.id) AS num_comments
+	FROM likes 
+	LEFT JOIN posts ON posts.id = likes.post_id 
+	LEFT JOIN comments ON comments.id = likes.comment_id 
+	GROUP BY week
+	ORDER BY week
+) WITH DATA;
+-- Flush a cache manually -- 
+REFRESH MATERIALIZED VIEW weekly_likes;
